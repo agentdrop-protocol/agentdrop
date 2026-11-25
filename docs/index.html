@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentDrop — Free claims, gated by Agent ID</title>
+<meta name="description" content="AgentDrop is permissionless claim-pool infrastructure on BNB Chain. Pools are gated by SPACE ID Agent ID: only Agent ID holders can claim, once per address per pool.">
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#131824; --panel2:#0f1320; --line:#232b3f;
+    --text:#e8ecf4; --muted:#9aa6bd; --accent:#f0b90b; --accent2:#1e2637;
+    --ok:#2ebd85; --bad:#f6465d; --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 18px 60px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-mark{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#f0b90b,#b8860b);display:flex;align-items:center;justify-content:center;font-size:24px}
+  .logo h1{font-size:24px;margin:0;letter-spacing:.3px}
+  .logo p{margin:2px 0 0;color:var(--muted);font-size:13px}
+  button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--accent2);color:var(--text);padding:10px 18px}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#141414;font-weight:700}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .hero{margin:30px 0 22px}
+  .hero h2{font-size:30px;line-height:1.25;margin:0 0 10px}
+  .hero p{color:var(--muted);font-size:16px;line-height:1.55;margin:0;max-width:640px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin:18px 0}
+  .card h3{margin:0 0 6px;font-size:20px}
+  .card .sub{color:var(--muted);font-size:14px;line-height:1.5}
+  .badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#233018;color:#a6e34d;border:1px solid #35521c}
+  .badge.closed{background:#3a1d24;color:#ff8fa0;border-color:#5c2733}
+  .bar{height:12px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:14px 0 6px}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#f0b90b,#ffd94d);width:0%}
+  .row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+  .row b{color:var(--text)}
+  .status{font-size:14px;line-height:1.55;margin:14px 0;padding:12px 14px;border-radius:10px;background:var(--panel2);border:1px solid var(--line)}
+  .status.ok{border-color:#1f4d38;color:#9fe8c6}
+  .status.bad{border-color:#5c2733;color:#ffb3c0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0}
+  .mini{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .mini h4{margin:0 0 8px;font-size:16px}
+  .mini p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+  .addr{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;word-break:break-all}
+  footer{margin-top:34px;color:var(--muted);font-size:13px;line-height:1.6}
+  #claimBtn{width:100%;font-size:17px;padding:14px;margin-top:6px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="logo-mark">🎁</div>
+      <div>
+        <h1>AgentDrop</h1>
+        <p>Free claim pools, gated by Agent ID · BNB Chain</p>
+      </div>
+    </div>
+    <button id="connectBtn">Connect wallet</button>
+  </header>
+
+  <section class="hero">
+    <h2>Claim pools that only Agent ID holders can touch.</h2>
+    <p>AgentDrop is permissionless infrastructure for free claims on BNB Chain. Anyone can create a pool; the contract checks the claimer's SPACE ID Agent ID on-chain, so only holders can claim — once per address, per pool. No lists, no screenshots, no trust.</p>
+  </section>
+
+  <section class="card" id="poolCard">
+    <div class="row" style="align-items:center">
+      <h3 style="margin:0">🏆 AgentDrop Pioneer — demo pool</h3>
+      <span class="badge" id="poolBadge">Loading…</span>
+    </div>
+    <p class="sub">A commemorative ERC-721 for the first Agent ID holders who try AgentDrop. Free to claim — you only pay your own gas (a fraction of a cent on BSC).</p>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="row">
+      <span><b id="claimedCount">–</b> / <b id="maxClaims">–</b> claimed</span>
+      <span id="countdown">–</span>
+    </div>
+    <div class="status hidden" id="statusBox"></div>
+    <button class="primary" id="claimBtn" disabled>Connect wallet to claim</button>
+    <div class="row" style="margin-top:12px">
+      <span>Pool #0 · NFT pool · One claim per Agent ID address</span>
+      <span><a id="poolLink" target="_blank" rel="noopener">View contract</a></span>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="mini">
+      <h4>1 · Hold an Agent ID</h4>
+      <p>Agent ID is SPACE ID's non-transferable agent identity on BNB Chain. One per user — that's what makes one-claim-per-person enforceable on-chain.</p>
+    </div>
+    <div class="mini">
+      <h4>2 · Connect &amp; check</h4>
+      <p>Connect any BNB Chain wallet. AgentDrop reads your Agent ID balance directly from the official SPACE ID contract — no sign-ups, no forms.</p>
+    </div>
+    <div class="mini">
+      <h4>3 · Claim, once</h4>
+      <p>Hit claim and the Pioneer NFT is minted straight to your wallet. The pool contract has no owner and no admin — nobody can move the rules after launch.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>Contracts (verified)</h3>
+    <p class="sub">Deployed on BNB Chain mainnet, source verified on Sourcify (exact match). The AgentDrop contract has <b>no owner and no admin functions</b>; the Agent ID registry address is immutable.</p>
+    <p class="addr">AgentDrop<br><a id="dropLink" target="_blank" rel="noopener">0x35E0f6e1F729a03B34d1f25Fa20725E1c95C6A71</a></p>
+    <p class="addr">PioneerNFT<br><a id="nftLink" target="_blank" rel="noopener">0xd250D888152F7155854360456F218B94a4dA7995</a></p>
+    <p class="addr">SPACE ID Agent ID registry<br><a href="https://bscscan.com/address/0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F" target="_blank" rel="noopener">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</a></p>
+  </section>
+
+  <footer>
+    Built for the Binance Wallet × BNB Chain Agent ID Hackathon. Open source — read every line before you claim; the contract is the documentation.<br>
+    Claims are free; the claimer pays only BSC gas. Nothing here is financial advice.
+  </footer>
+</div>
+
+<script>
+"use strict";
+const AGENTDROP = "0x35E0f6e1F729a03B34d1f25Fa20725E1c95C6A71";
+const PIONEER  = "0xd250D888152F7155854360456F218B94a4dA7995";
+const AGENTID  = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
+const RPC = "https://bsc-dataseed.binance.org";
+const POOL_ID = 0;
+const SEL = { claim:"0x379607f5", pools:"0xac4afa38", hasClaimed:"0x873f6f9e", balanceOf:"0x70a08231" };
+
+const $ = (id) => document.getElementById(id);
+$("dropLink").href = "https://bscscan.com/address/" + AGENTDROP;
+$("nftLink").href  = "https://bscscan.com/address/" + PIONEER;
+$("poolLink").href = "https://bscscan.com/address/" + AGENTDROP;
+
+const padAddr = (a) => a.toLowerCase().replace("0x","").padStart(64,"0");
+const padUint = (n) => BigInt(n).toString(16).padStart(64,"0");
+const word = (hex, i) => hex.slice(2 + i*64, 2 + (i+1)*64);
+const asUint = (w) => BigInt("0x" + w);
+const asAddr = (w) => "0x" + w.slice(24);
+
+async function rpcCall(to, data){
+  const r = await fetch(RPC, {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({jsonrpc:"2.0", id:1, method:"eth_call", params:[{to, data}, "latest"]})});
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message || "rpc error");
+  return j.result;
+}
+
+let pool = null, account = null;
+
+async function loadPool(){
+  const res = await rpcCall(AGENTDROP, SEL.pools + padUint(POOL_ID));
+  pool = {
+    token: asAddr(word(res,1)), isNft: asUint(word(res,2)) === 1n,
+    maxClaims: asUint(word(res,4)), claimed: asUint(word(res,5)),
+    start: Number(asUint(word(res,6))), end: Number(asUint(word(res,7)))
+  };
+  $("claimedCount").textContent = pool.claimed.toString();
+  $("maxClaims").textContent = pool.maxClaims.toString();
+  $("barFill").style.width = (pool.maxClaims > 0n ? Number(pool.claimed * 100n / pool.maxClaims) : 0) + "%";
+  tickCountdown();
+  refreshState();
+}
+
+function tickCountdown(){
+  if (!pool) return;
+  const now = Math.floor(Date.now()/1000);
+  const badge = $("poolBadge");
+  if (now < pool.start){ badge.textContent = "Opens soon"; badge.className = "badge closed"; }
+  else if (now > pool.end){ badge.textContent = "Pool ended"; badge.className = "badge closed"; }
+  else badge.textContent = "Live";
+  const left = pool.end - now;
+  if (left <= 0){ $("countdown").textContent = "Ended " + new Date(pool.end*1000).toLocaleDateString(); return; }
+  const d = Math.floor(left/86400), h = Math.floor(left%86400/3600), m = Math.floor(left%3600/60);
+  $("countdown").textContent = "Ends in " + d + "d " + h + "h " + m + "m";
+}
+setInterval(tickCountdown, 30000);
+
+function setStatus(msg, kind){
+  const box = $("statusBox");
+  if (!msg){ box.className = "status hidden"; box.textContent = ""; return; }
+  box.className = "status" + (kind ? " " + kind : "");
+  box.textContent = msg;
+}
+
+async function refreshState(){
+  const btn = $("claimBtn");
+  if (!pool) return;
+  const now = Math.floor(Date.now()/1000);
+  if (now < pool.start){ btn.disabled = true; btn.textContent = "Pool not open yet"; return; }
+  if (now > pool.end){ btn.disabled = true; btn.textContent = "Pool ended"; return; }
+  if (pool.claimed >= pool.maxClaims){ btn.disabled = true; btn.textContent = "Fully claimed"; return; }
+  if (!account){ btn.disabled = true; btn.textContent = "Connect wallet to claim"; setStatus(""); return; }
+  try {
+    const [balRes, claimedRes] = await Promise.all([
+      rpcCall(AGENTID, SEL.balanceOf + padAddr(account)),
+      rpcCall(AGENTDROP, SEL.hasClaimed + padUint(POOL_ID) + padAddr(account))
+    ]);
+    const holds = asUint(word(balRes,0)) > 0n;
+    const already = asUint(word(claimedRes,0)) === 1n;
+    if (!holds){
+      btn.disabled = true; btn.textContent = "Agent ID required";
+      setStatus("This wallet does not hold an Agent ID, so the contract will reject a claim. Agent ID lives in your Binance Agentic Wallet / SPACE ID — connect with the wallet that holds yours.", "bad");
+    } else if (already){
+      btn.disabled = true; btn.textContent = "Already claimed ✓";
+      setStatus("This address has already claimed its Pioneer NFT from pool #0. One per Agent ID — that's the rule that keeps it fair.", "ok");
+    } else {
+      btn.disabled = false; btn.textContent = "Claim your Pioneer NFT — free";
+      setStatus("Agent ID detected ✓ — you're eligible. Claiming mints the Pioneer NFT straight to this wallet; you pay only BSC gas.", "ok");
+    }
+  } catch(e){ setStatus("Could not check eligibility: " + e.message, "bad"); }
+}
+
+async function connect(){
+  if (!window.ethereum){ setStatus("No injected wallet found. Open this page in your wallet's browser (e.g. Binance Wallet) or a browser with a Web3 extension.", "bad"); return; }
+  try {
+    const chainId = await window.ethereum.request({method:"eth_chainId"});
+    if (chainId !== "0x38"){
+      await window.ethereum.request({method:"wallet_switchEthereumChain", params:[{chainId:"0x38"}]});
+    }
+    const accs = await window.ethereum.request({method:"eth_requestAccounts"});
+    account = accs[0];
+    $("connectBtn").textContent = account.slice(0,6) + "…" + account.slice(-4);
+    refreshState();
+  } catch(e){ setStatus("Connection failed: " + (e.message || e), "bad"); }
+}
+
+async function claim(){
+  if (!window.ethereum || !account) return;
+  const btn = $("claimBtn");
+  btn.disabled = true; btn.textContent = "Waiting for signature…";
+  try {
+    const txHash = await window.ethereum.request({method:"eth_sendTransaction",
+      params:[{from: account, to: AGENTDROP, data: SEL.claim + padUint(POOL_ID)}]});
+    setStatus("Claim sent: " + txHash + " — waiting for confirmation…", "ok");
+    btn.textContent = "Claiming…";
+    const iv = setInterval(async () => {
+      try {
+        const r = await fetch(RPC, {method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({jsonrpc:"2.0", id:1, method:"eth_getTransactionReceipt", params:[txHash]})});
+        const j = await r.json();
+        if (j.result){
+          clearInterval(iv);
+          if (j.result.status === "0x1"){
+            setStatus("🎉 Pioneer NFT minted to your wallet! Tx: " + txHash, "ok");
+            btn.textContent = "Already claimed ✓";
+            loadPool();
+          } else {
+            setStatus("The claim transaction reverted. If you claimed before or don't hold an Agent ID, the contract rejects it by design.", "bad");
+            btn.disabled = false; btn.textContent = "Claim your Pioneer NFT — free";
+          }
+        }
+      } catch(e){ /* keep waiting */ }
+    }, 3000);
+  } catch(e){
+    setStatus("Claim cancelled or failed: " + (e.message || e), "bad");
+    btn.disabled = false; btn.textContent = "Claim your Pioneer NFT — free";
+  }
+}
+
+$("connectBtn").addEventListener("click", connect);
+$("claimBtn").addEventListener("click", claim);
+if (window.ethereum){
+  window.ethereum.on && window.ethereum.on("accountsChanged", (a) => { account = a[0] || null; refreshState(); });
+}
+loadPool().catch(e => { $("poolBadge").textContent = "Could not load pool"; setStatus("Pool data failed to load: " + e.message, "bad"); });
+</script>
+</body>
+</html>

@@ -1,2 +1,11 @@
 out/
 cache/
+
+out/
+cache/
+broadcast/*/dry-run/
+
+out/
+cache/
+broadcast/
+github_agentdrop_ed25519*

@@ -1,0 +1,19 @@
+{
+  "chain": 56,
+  "deployer": "0x97b8Be41dBB9D399432cd098e1e56E927D023FA6",
+  "pioneerNft": "0xd250D888152F7155854360456F218B94a4dA7995",
+  "agentDrop": "0x35E0f6e1F729a03B34d1f25Fa20725E1c95C6A71",
+  "txs": {
+    "pioneer": "0x900f73aef20666020de58c2aa40def91d7d411153f9a8310a7bfe978f5ba9402",
+    "drop": "0xa0b328bb6b53f04295f32637490519eda8b85d3886e03959dfaa3d4fe2a5ebbe",
+    "setMinter": "0xb1b5b1f9e059bde77d9d1321e97f66f52630187cf784f0a6a3a49298b2af97ae"
+  },
+  "date": "2026-11-25T02:48:11.393Z",
+  "demoPool": {
+    "poolId": 0,
+    "tx": "0x0aa5db59474613b6d0251571d313bae95261c33b64335e77f45b2be370370dc3",
+    "maxClaims": 100,
+    "startUtc": "2026-11-25T02:50:30.000Z",
+    "endUtc": "2026-12-08T05:00:00.000Z"
+  }
+}
